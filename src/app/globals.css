@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * Brand palette Klinik Pratama Satria Gadingan.
+ * Tailwind v3 — token didefinisikan di tailwind.config.ts (theme.extend.colors).
+ */
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #FDFDFC;
+  color: #333B3D;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Fokus terlihat untuk aksesibilitas */
+*:focus-visible {
+  outline: 2px solid #2E7D5B;
+  outline-offset: 2px;
+}
