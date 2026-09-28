@@ -171,6 +171,127 @@ Untuk integrasi CMS (mis. Sanity, Strapi, Payload), cukup ubah `src/data/*.ts`
 menjadi loader yang memanggil API CMS di server component, tanpa menyentuh
 komponen UI.
 
+---
+
+## CMS Admin — Setup & Penggunaan
+
+Landing page ini sudah terintegrasi dengan **custom CMS admin UI** untuk section
+high-frequency. Admin klinik dapat mengedit via form login username + password
+(tidak perlu akun GitHub — server yang commit atas nama klinik via Personal Access
+Token).
+
+Section editable via CMS:
+
+- **Jadwal Dokter** (`src/data/schedules.json`)
+- **Staf Medis** (`src/data/doctors.json`) — struktur tim + nama & foto individu
+- **Galeri** (`src/data/gallery.json`) — foto fasilitas/kegiatan
+
+### Arsitektur
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│ Browser — /admin/login                                                   │
+│ Form: Username + Password (Bahasa Indonesia, branded)                    │
+│ Submit → POST /api/cms/login                                              │
+└────────────────────────┬─────────────────────────────────────────────────┘
+                         │ Session cookie (HttpOnly, signed HMAC, 7 hari)
+                         ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│ Browser — /admin/{jadwal,dokter,galeri}                                  │
+│ Form editor (table + add/delete + image upload)                          │
+│ Submit → POST /api/cms/save (atau /api/cms/upload untuk gambar)           │
+└────────────────────────┬─────────────────────────────────────────────────┘
+                         │ Cookie validated by middleware (Edge runtime)
+                         ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│ Vercel serverless function (Node)                                        │
+│ Validates ADMIN_USERNAME + ADMIN_PASSWORD                                │
+│ Commits JSON to GitHub via Personal Access Token                          │
+│ Returns commit SHA → client shows success                                 │
+└────────────────────────┬─────────────────────────────────────────────────┘
+                         │ git push (ke repo via PAT)
+                         ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│ Vercel detects push → next build → redeploy (≈30-60 detik)               │
+│ src/data/*.json baru ter-load di build                                   │
+│ Landing page tampil dengan data baru                                     │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+### Setup satu kali (oleh maintainer)
+
+**1. Buat GitHub Personal Access Token (classic)**: <https://github.com/settings/tokens/new>
+- **Note:** "Klinik Satria CMS Server"
+- **Expiration:** 90 hari (atau sesuai kebijakan security Anda)
+- **Scopes:** centang **Contents** (`contents: read+write`) saja — tidak perlu yang lain.
+- Klik "Generate token" → **salin token** (hanya tampil sekali).
+
+**2. Set environment variables di Vercel** (Settings → Environment Variables → Production):
+
+| Name | Value | Wajib? |
+|---|---|---|
+| `ADMIN_USERNAME` | username untuk admin (mis. `admin`) | ✅ ya |
+| `ADMIN_PASSWORD` | password untuk admin (pilih yang kuat, mis. 16 karakter acak) | ✅ ya |
+| `CMS_SESSION_SECRET` | string random panjang untuk signing cookie (mis. `openssl rand -hex 32`) | ✅ ya |
+| `CMS_GITHUB_PAT` | token dari langkah 1 | ✅ ya |
+| `CMS_GITHUB_REPO` | `username/klinik-pratama-satria-gadingan` | ✅ ya |
+| `CMS_GITHUB_BRANCH` | `main` (default) | opsional |
+
+Klik **Save** lalu **trigger redeploy** (Deployments → klik ⋯ → Redeploy) agar
+env vars aktif di build/runtime.
+
+**3. Deploy & verifikasi**:
+```bash
+git add . && git commit -m "CMS: custom admin UI"
+git push origin main
+# Vercel auto-redeploy.
+
+# Coba login
+open https://<domain-anda>/admin/login
+```
+
+### Cara admin klinik pakai
+
+1. Buka `https://<domain-anda>/admin/login`.
+2. Masukkan username + password → klik **Masuk**.
+3. Pilih koleksi di dashboard:
+   - **Jadwal Dokter** (`/admin/jadwal`) — tabel inline edit, tambah/hapus baris
+   - **Staf Medis** (`/admin/dokter`) — struktur kategori + nama individu & foto
+   - **Galeri** (`/admin/galeri`) — kartu per item, upload gambar lokal
+4. Edit via form (input, select, file upload).
+5. Klik **Simpan** → loading → sukses + commit SHA ditampilkan.
+6. Tunggu ~30-60 detik; Vercel rebuild otomatis; data baru tampil di landing page.
+
+Klik **Keluar** untuk logout (cookie cleared).
+
+### Yang TIDAK di-expose via CMS (saat ini)
+
+Untuk menjaga scope MVP tetap kecil, **section ini tetap diedit via PR/commit langsung**:
+
+- `src/data/siteConfig.ts` — alamat, telepon, email, medsos, Maps embed
+- `src/data/navigation.ts` — menu header
+- `src/data/clinicContent.ts` — sejarah, visi, misi, profil
+- `src/data/heroSlides.ts` — slide hero
+- `src/data/services.ts` — daftar layanan
+- `src/data/footerLinks.ts` — tautan footer
+
+Section-section ini jarang berubah dan cocok diedit via GitHub PR langsung.
+Lihat `TECHNICAL_DOCUMENTATION.md` untuk instruksi detail.
+
+### Troubleshooting
+
+| Masalah | Solusi |
+|---|---|
+| **404 di `/admin/login`** | `src/app/admin/login/page.tsx` belum ter-deploy. Cek git log dan Vercel build. |
+| **Redirect loop ke /admin/login** | Session cookie tidak terbaca. Cek middleware.ts; cek apakah Vercel middleware aktif. |
+| **"Server belum dikonfigurasi"** | Env `ADMIN_PASSWORD` atau `CMS_SESSION_SECRET` belum di-set di Vercel. Set lalu redeploy. |
+| **"Username atau password salah"** | Cek ADMIN_USERNAME/ADMIN_PASSWORD di Vercel env. Default username: `admin`. |
+| **Save gagal "GitHub PUT gagal (401)"** | `CMS_GITHUB_PAT` invalid/expired. Generate token baru, set env, redeploy. |
+| **Save gagal "GitHub PUT gagal (404)"** | `CMS_GITHUB_REPO` salah (cek format `user/repo`). Pastikan repo accessible dari akun PAT. |
+| **Save gagal "GitHub PUT gagal (409)"** | File berubah di GitHub antara fetch SHA dan PUT. Coba save lagi (race condition jarang). |
+| **Image upload gagal** | Size > 5MB (Vercel function limit) atau format bukan PNG/JPG/WebP. Cek juga error message dari API. |
+| **Edit tidak muncul di landing page** | Cek Vercel Deployments — biasanya build butuh 30-60 detik. Lihat log kalau build error. |
+
 ## Lisensi & Kredit
 
 © Klinik Pratama Satria Gadingan. Berdiri sejak 2002.

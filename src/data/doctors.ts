@@ -1,50 +1,9 @@
-import type { StaffStructure, StaffMember } from "@/types/content";
-
 /**
- * Struktur 16 tenaga medis — verified dari clinic-info.md §1.
- * 4 dokter umum + 2 dokter gigi + 2 bidan + 3 perawat + 1 apoteker
- * + 1 teknis kefarmasian + 1 rekam medis + 1 fisioterapis + 1 kebersihan = 16.
- *
- * Per stage decision D4: TAMPILAN dikonsolidasikan jadi 1 kartu "Tim Medis"
- * dengan teks struktur. Array individualStaff tetap dipertahankan untuk
- * admin yang ingin memecah jadi kartu individu di kemudian hari.
+ * doctors.ts — typed loader dari doctors.json (Decap CMS-editable).
+ * Struktur JSON: { "staffStructure": StaffStructure[], "individualStaff": StaffMember[] }.
  */
-export const staffStructure: StaffStructure[] = [
-  { kategori: "dokter-umum", label: "Dokter Umum", jumlah: 4 },
-  { kategori: "dokter-gigi", label: "Dokter Gigi", jumlah: 2 },
-  { kategori: "bidan", label: "Bidan", jumlah: 2 },
-  { kategori: "perawat", label: "Perawat", jumlah: 3 },
-  { kategori: "apoteker", label: "Apoteker", jumlah: 1 },
-  {
-    kategori: "tenaga-teknis-kefarmasian",
-    label: "Tenaga Teknis Kefarmasian",
-    jumlah: 1,
-  },
-  { kategori: "tenaga-rekam-medis", label: "Tenaga Rekam Medis", jumlah: 1 },
-  { kategori: "fisioterapis", label: "Fisioterapis", jumlah: 1 },
-  { kategori: "tenaga-kebersihan", label: "Tenaga Kebersihan", jumlah: 1 },
-];
+import data from "./doctors.json";
+import type { StaffMember, StaffStructure } from "@/types/content";
 
-/**
- * Placeholder individu untuk setiap slot — nama & foto ber-prefix [Contoh].
- * Total = 16 (4+2+2+3+1+1+1+1+1). Saat ini tidak di-render di UI (D4 = 1 kartu),
- * tapi data tersedia untuk admin yang ingin merinci.
- */
-export const individualStaff: StaffMember[] = [
-  { id: "staff-001", kategori: "dokter-umum", nama: "[Contoh] dr. Andi Wijaya", fotoUrl: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=facearea&facepad=2&w=400&h=400&q=80" },
-  { id: "staff-002", kategori: "dokter-umum", nama: "[Contoh] dr. Budi Santoso", fotoUrl: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=facearea&facepad=2&w=400&h=400&q=80" },
-  { id: "staff-003", kategori: "dokter-umum", nama: "[Contoh] dr. Citra Lestari", fotoUrl: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=facearea&facepad=2&w=400&h=400&q=80" },
-  { id: "staff-004", kategori: "dokter-umum", nama: "[Contoh] dr. Dewi Anggraini", fotoUrl: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=facearea&facepad=2&w=400&h=400&q=80" },
-  { id: "staff-005", kategori: "dokter-gigi", nama: "[Contoh] drg. Eko Prasetyo", fotoUrl: "https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=facearea&facepad=2&w=400&h=400&q=80" },
-  { id: "staff-006", kategori: "dokter-gigi", nama: "[Contoh] drg. Fitriani", fotoUrl: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?auto=format&fit=facearea&facepad=2&w=400&h=400&q=80" },
-  { id: "staff-007", kategori: "bidan", nama: "[Contoh] Bd. Gita Permata", fotoUrl: "https://images.unsplash.com/photo-1584467735815-f778f274e296?auto=format&fit=facearea&facepad=2&w=400&h=400&q=80" },
-  { id: "staff-008", kategori: "bidan", nama: "[Contoh] Bd. Handayani", fotoUrl: "https://images.unsplash.com/photo-1614608682850-e0d6ed316d47?auto=format&fit=facearea&facepad=2&w=400&h=400&q=80" },
-  { id: "staff-009", kategori: "perawat", nama: "[Contoh] Ns. Indra", fotoUrl: "https://images.unsplash.com/photo-1638202993928-7267aad84c31?auto=format&fit=facearea&facepad=2&w=400&h=400&q=80" },
-  { id: "staff-010", kategori: "perawat", nama: "[Contoh] Ns. Jihan", fotoUrl: "https://images.unsplash.com/photo-1551601651-2a8555f1a136?auto=format&fit=facearea&facepad=2&w=400&h=400&q=80" },
-  { id: "staff-011", kategori: "perawat", nama: "[Contoh] Ns. Krisna", fotoUrl: "https://images.unsplash.com/photo-1622902046580-2b47f47f5471?auto=format&fit=facearea&facepad=2&w=400&h=400&q=80" },
-  { id: "staff-012", kategori: "apoteker", nama: "[Contoh] Apt. Lina Marlina, S.Farm", fotoUrl: "https://images.unsplash.com/photo-1559839914-17aae19cec71?auto=format&fit=facearea&facepad=2&w=400&h=400&q=80" },
-  { id: "staff-013", kategori: "tenaga-teknis-kefarmasian", nama: "[Contoh] tt. Mahendra", fotoUrl: "https://images.unsplash.com/photo-1607990281513-2c110a25bd8c?auto=format&fit=facearea&facepad=2&w=400&h=400&q=80" },
-  { id: "staff-014", kategori: "tenaga-rekam-medis", nama: "[Contoh] Nirmala", fotoUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=facearea&facepad=2&w=400&h=400&q=80" },
-  { id: "staff-015", kategori: "fisioterapis", nama: "[Contoh] Ft. Oki Saputra", fotoUrl: "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=facearea&facepad=2&w=400&h=400&q=80" },
-  { id: "staff-016", kategori: "tenaga-kebersihan", nama: "[Contoh] Purwantoro", fotoUrl: "https://images.unsplash.com/photo-1600486913747-55e5470d6f40?auto=format&fit=facearea&facepad=2&w=400&h=400&q=80" },
-];
+export const staffStructure: StaffStructure[] = (data as { staffStructure: StaffStructure[] }).staffStructure;
+export const individualStaff: StaffMember[] = (data as { individualStaff: StaffMember[] }).individualStaff;

@@ -205,6 +205,15 @@ export function HeartPulseIcon(props: IconProps) {
   );
 }
 
+export function SmartphoneIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <rect x="6" y="2" width="12" height="20" rx="2" />
+      <path d="M11 18h2" />
+    </svg>
+  );
+}
+
 const iconMap: Record<string, (p: IconProps) => React.JSX.Element> = {
   stethoscope: StethoscopeIcon,
   tooth: ToothIcon,
